@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimate Pi Using Monte Carlo Method</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 2px solid #333;
+            display: block;
+            margin: 10px auto;
+            border-radius: 5px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #3498db;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            text-align: center;
+            color: #16a085;
+        }
+        .explanation {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        .btn.back-btn {
+            background-color: #95a5a6;
+        }
+
+        .btn.back-btn:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Estimate Pi Using Monte Carlo Method</h1>
+    <button onclick="window.location.href='index.html'" class="btn back-btn">ย้อนกลับไปหน้าแรก</button>
+
+    <div class="explanation">
+        <strong>Monte Carlo Method</strong> is a technique that uses random sampling to approximate mathematical values.
+        In this case, we randomly generate many points inside a 1×1 square and count how many fall inside the circle 
+        with radius 1 unit (fully contained within the square). We can estimate Pi using the formula:<br><br>
+        <strong>Pi ≈ 4 × (Number of points inside the circle / Total number of points)</strong>
+    </div>
+
+    <label for="pointsInput">Enter the number of random points:</label>
+    <input type="number" id="pointsInput" value="10000" min="100">
+    <button onclick="startSimulation()">Estimate Pi</button>
+
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <canvas id="piChart" width="400" height="200"></canvas>
+
+    <div class="result" id="result"></div>
+
+    <div class="explanation">
+        <strong>How to use this tool:</strong><br>
+        1. Enter the number of points you want to randomly generate (e.g., 100000)<br>
+        2. Click the “Estimate Pi” button<br>
+        3. The system will display the estimated value of Pi and details of the simulation<br><br>
+        <strong>Note:</strong> The line graph below shows how the estimated value of Pi 
+        changes as the number of points increases. As more points are sampled, the value will 
+        get closer to 3.14159.
+    </div>
+</div>
+
+<script>
+let chart;
+
+function startSimulation() {
+    const totalPoints = parseInt(document.getElementById('pointsInput').value);
+    const canvas = document.getElementById('canvas');
+    const ctxCanvas = canvas.getContext('2d');
+    ctxCanvas.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw square
+    ctxCanvas.strokeStyle = '#000';
+    ctxCanvas.strokeRect(0, 0, canvas.width, canvas.height);
+
+    // Draw full circle
+    ctxCanvas.beginPath();
+    ctxCanvas.arc(canvas.width/2, canvas.height/2, canvas.width/2, 0, Math.PI * 2);
+    ctxCanvas.stroke();
+
+    let insideCircle = 0;
+    let piHistory = [];
+    let stepSize = Math.max(1, Math.floor(totalPoints / 100));
+
+    for (let i = 0; i < totalPoints; i++) {
+        const x = Math.random() * 2 - 1;
+        const y = Math.random() * 2 - 1;
+        const distance = x * x + y * y;
+
+        const screenX = (x + 1) * canvas.width / 2;
+        const screenY = (y + 1) * canvas.height / 2;
+
+        const isInside = distance <= 1;
+        if (isInside) {
+            insideCircle++;
+            ctxCanvas.fillStyle = 'green';
+        } else {
+            ctxCanvas.fillStyle = 'red';
+        }
+        ctxCanvas.beginPath();
+        ctxCanvas.arc(screenX, screenY, 1, 0, Math.PI * 2);
+        ctxCanvas.fill();
+
+        if (i % stepSize === 0) {
+            let piEstimate = 4 * insideCircle / (i+1);
+            piHistory.push(piEstimate);
+        }
+    }
+
+    const piEstimate = 4 * insideCircle / totalPoints;
+    document.getElementById('result').innerText = `Estimated Pi = ${piEstimate.toFixed(6)} (using ${totalPoints} points)\n\nSimulation completed`;
+
+    drawPiChart(piHistory);
+}
+
+function drawPiChart(piHistory) {
+    const ctxChart = document.getElementById('piChart').getContext('2d');
+    if (chart) chart.destroy();
+    chart = new Chart(ctxChart, {
+        type: 'line',
+        data: {
+            labels: piHistory.map((_, i) => i+1),
+            datasets: [{
+                label: 'Estimated Pi',
+                data: piHistory,
+                borderColor: '#e74c3c',
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    suggestedMin: 2.5,
+                    suggestedMax: 4
+                }
+            }
+        }
+    });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimax & Alpha-Beta Pruning Simulator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .input-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .minimax-btn {
+            background-color: #9b59b6;
+        }
+        
+        .alphabeta-btn {
+            background-color: #e91e63;
+        }
+        
+        .tree-container {
+            overflow: auto;
+            max-height: 80vh;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+
+        .tree {                     
+            padding: 20px;
+            min-width: fit-content;
+        }
+        
+        .node {
+                        /* ปรับการจัดวางสำหรับโหนดระดับ 4 (พ่อแม่ของใบไม้) */
+            .node[data-depth="4"] .children {
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+
+            /* ซ่อนเส้นเชื่อมสำหรับระดับใบไม้ */
+            .node[data-depth="4"] .horizontal-connector {
+                display: none;
+            }
+
+            /* ปรับการจัดตำแหน่งเส้นเชื่อมแนวตั้ง */
+            .node[data-depth="4"] .connector {
+                height: 15px;
+                top: -15px;
+            }
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 10px;
+        }
+        
+        .max-node {
+            width: 40px;
+            height: 40px;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .min-node {
+            width: 40px;
+            height: 40px;
+            background-color: #e74c3c;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .leaf-node {
+            width: 30px;
+            height: 30px;
+            background-color: #2ecc71;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 12px;
+            margin: 3px;
+        }
+        
+        .children {
+            display: flex;
+            justify-content: center;
+            margin-top: 40px;
+            position: relative;
+        }
+        
+        .connector {
+            position: absolute;
+            width: 2px;
+            background-color: #7f8c8d;
+            top: -20px;
+            height: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .horizontal-connector {
+            position: absolute;
+            height: 2px;
+            background-color: #7f8c8d;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .highlight {
+            box-shadow: 0 0 10px 5px rgba(255, 255, 0, 0.7);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .pruned {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 5px 2px rgba(255, 255, 0, 0.7); }
+            50% { box-shadow: 0 0 15px 8px rgba(255, 255, 0, 0.7); }
+            100% { box-shadow: 0 0 5px 2px rgba(255, 255, 0, 0.7); }
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .step-info-container {
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .step-info {
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        
+        .alpha-beta-info {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .alpha {
+            color: #e74c3c;
+        }
+        
+        .beta {
+            color: #3498db;
+        }
+        
+        .value-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .value-input {
+            display: flex;
+            align-items: center;
+        }
+        
+        .value-input label {
+            margin-right: 5px;
+            min-width: 50px;
+        }
+        
+        .value-input input {
+            flex-grow: 1;
+            margin-bottom: 0;
+        }
+        
+        .auto-generate {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .auto-generate select {
+            width: auto;
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+        
+        /* Adjustments for leaf nodes container */
+        .leaf-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .children.multi-row {
+        flex-direction: column;
+         align-items: center;
+        }
+
+        .children.multi-row .node {
+            margin: 10px 5px;
+        }
+        .btn.back-btn {
+            background-color: #95a5a6;
+        }
+
+        .btn.back-btn:hover {
+            background-color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Minimax & Alpha-Beta Pruning Simulator</h1>
+        <button onclick="window.location.href='index.html'" class="btn back-btn">ย้อนกลับไปหน้าแรก</button>
+        <div class="input-section">
+            <label for="tree-depth">Tree Depth:</label>
+            <select id="tree-depth">
+                <option value="1">1 (2 leaves)</option>
+                <option value="2" selected>2 (4 leaves)</option>
+                <option value="3">3 (8 leaves)</option>
+                <option value="4">4 (16 leaves)</option>
+                <option value="5">5 (32 leaves)</option>
+            </select>
+            
+            <div class="auto-generate">
+                <label for="value-range">Auto-generate values:</label>
+                <select id="value-range">
+                    <option value="custom">Custom</option>
+                    <option value="1-10">1-10</option>
+                    <option value="-10-10">-10 to 10</option>
+                    <option value="-100-100">-100 to 100</option>
+                </select>
+                <button id="generate-values">Generate</button>
+            </div>
+            
+            <div id="value-inputs" style="display: none;">
+                <h3>Enter leaf node values:</h3>
+                <div id="value-input-container" class="value-inputs"></div>
+                <button id="build-tree-btn">Build Tree</button>
+            </div>
+        </div>
+        
+        <div id="tree-section" style="display: none;">
+            <div class="controls">
+                <button id="run-minimax" class="minimax-btn">Run Minimax</button>
+                <button id="run-alphabeta" class="alphabeta-btn">Run Alpha-Beta</button>
+                <button id="reset-btn">Reset</button>
+                <button id="step-btn" disabled>Step</button>
+                <button id="auto-run-btn" disabled>Auto Run</button>
+            </div>
+            
+            <div class="alpha-beta-info" style="display: none;">
+                <div>α: <span id="alpha-value">-∞</span></div>
+                <div>β: <span id="beta-value">+∞</span></div>
+            </div>
+            
+            <div class="step-info-container">
+                <div class="step-info" id="step-info"></div>
+            </div>
+            
+            <div class="tree-container">
+                <div id="tree"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const treeDepthSelect = document.getElementById('tree-depth');
+        const valueRangeSelect = document.getElementById('value-range');
+        const generateValuesBtn = document.getElementById('generate-values');
+        const valueInputsSection = document.getElementById('value-inputs');
+        const valueInputContainer = document.getElementById('value-input-container');
+        const buildTreeBtn = document.getElementById('build-tree-btn');
+        const treeSection = document.getElementById('tree-section');
+        const runMinimaxBtn = document.getElementById('run-minimax');
+        const runAlphabetaBtn = document.getElementById('run-alphabeta');
+        const resetBtn = document.getElementById('reset-btn');
+        const stepBtn = document.getElementById('step-btn');
+        const autoRunBtn = document.getElementById('auto-run-btn');
+        const treeContainer = document.getElementById('tree');
+        const stepInfo = document.getElementById('step-info');
+        const alphaBetaInfo = document.querySelector('.alpha-beta-info');
+        const alphaValue = document.getElementById('alpha-value');
+        const betaValue = document.getElementById('beta-value');
+        
+        // Game tree variables
+        let leafValues = [];
+        let tree = null;
+        let currentAlgorithm = null;
+        let currentStep = 0;
+        let steps = [];
+        let isAutoRunning = false;
+        let autoRunInterval = null;
+        
+        // Initialize the value inputs based on tree depth
+        treeDepthSelect.addEventListener('change', () => {
+            const depth = parseInt(treeDepthSelect.value);
+            const leafCount = Math.pow(2, depth);
+            
+            valueInputContainer.innerHTML = '';
+            for (let i = 0; i < leafCount; i++) {
+                const div = document.createElement('div');
+                div.className = 'value-input';
+                div.innerHTML = `
+                    <label>Node ${i + 1}:</label>
+                    <input type="number" class="leaf-value" value="0">
+                `;
+                valueInputContainer.appendChild(div);
+            }
+            
+            valueInputsSection.style.display = 'block';
+        });
+        
+        // Generate random values based on selected range
+        generateValuesBtn.addEventListener('click', () => {
+            const range = valueRangeSelect.value;
+            const valueInputs = document.querySelectorAll('.leaf-value');
+            
+            if (range === 'custom') return;
+            
+            let min, max;
+            switch (range) {
+                case '1-10':
+                    min = 1;
+                    max = 10;
+                    break;
+                case '-10-10':
+                    min = -10;
+                    max = 10;
+                    break;
+                case '-100-100':
+                    min = -100;
+                    max = 100;
+                    break;
+            }
+            
+            valueInputs.forEach(input => {
+                input.value = Math.floor(Math.random() * (max - min + 1)) + min;
+            });
+        });
+        
+        // Build the tree from leaf values
+        buildTreeBtn.addEventListener('click', () => {
+            const valueInputs = document.querySelectorAll('.leaf-value');
+            leafValues = Array.from(valueInputs).map(input => parseInt(input.value));
+            
+            // Build the tree structure
+            tree = buildTree(leafValues);
+            
+            // Render the initial tree
+            renderTree(tree);
+            
+            // Show the algorithm controls
+            treeSection.style.display = 'block';
+            
+            // Reset any previous algorithm runs
+            resetAlgorithmState();
+            
+            // Initialize with first 5 steps visible
+            stepInfo.textContent = 'Ready to run algorithm. Click Step to proceed.';
+        });
+        
+        // Build tree structure recursively
+        function buildTree(values, depth = 0) {
+            if (values.length === 1) {
+                return {
+                    type: 'leaf',
+                    value: values[0],
+                    depth: depth,
+                    id: Math.random().toString(36).substr(2, 9)
+                };
+            }
+            
+            const half = Math.floor(values.length / 2);
+            const left = buildTree(values.slice(0, half), depth + 1);
+            const right = buildTree(values.slice(half), depth + 1);
+            
+            return {
+                type: depth % 2 === 0 ? 'max' : 'min',
+                left: left,
+                right: right,
+                value: null,
+                depth: depth,
+                id: Math.random().toString(36).substr(2, 9)
+            };
+        }
+        
+        // Render the tree recursively
+        function renderTree(node, parentElement = treeContainer) {
+            parentElement.innerHTML = '';
+            const treeDiv = document.createElement('div');
+            treeDiv.className = 'tree';
+            parentElement.appendChild(treeDiv);
+            
+            renderNode(node, treeDiv);
+        }
+        
+        function renderNode(node, parentElement) {
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = 'node';
+            nodeDiv.setAttribute('data-depth', node.depth);
+
+            
+            
+            let valueElement;
+            if (node.type === 'max') {
+                valueElement = document.createElement('div');
+                valueElement.className = 'max-node';
+                valueElement.textContent = node.value !== null ? node.value : '?';
+                valueElement.id = node.id;
+            } else if (node.type === 'min') {
+                valueElement = document.createElement('div');
+                valueElement.className = 'min-node';
+                valueElement.textContent = node.value !== null ? node.value : '?';
+                valueElement.id = node.id;
+            } else { // leaf
+                valueElement = document.createElement('div');
+                valueElement.className = 'leaf-node';
+                valueElement.textContent = node.value;
+                valueElement.id = node.id;
+                nodeDiv.style.margin = '5px'; // Add margin to leaf nodes
+            }
+            
+            nodeDiv.appendChild(valueElement);
+            parentElement.appendChild(nodeDiv);
+
+            
+            
+            if (node.type !== 'leaf') {
+                const childrenDiv = document.createElement('div');
+                childrenDiv.className = 'children';
+                nodeDiv.appendChild(childrenDiv);
+                
+                // Add connector lines
+                const leftConnector = document.createElement('div');
+                leftConnector.className = 'connector';
+                childrenDiv.insertBefore(leftConnector, childrenDiv.firstChild);
+                
+                renderNode(node.left, childrenDiv);
+                renderNode(node.right, childrenDiv);
+                
+                // Position the children
+                const leftChild = childrenDiv.firstChild;
+                const rightChild = childrenDiv.lastChild;
+                
+                // Add horizontal connectors
+                const leftHorizontal = document.createElement('div');
+                leftHorizontal.className = 'horizontal-connector';
+                leftHorizontal.style.width = `${leftChild.offsetWidth/2}px`;
+                leftHorizontal.style.left = '50%';
+                leftHorizontal.style.transform = 'translateX(-100%)';
+                childrenDiv.insertBefore(leftHorizontal, leftChild);
+                
+                const rightHorizontal = document.createElement('div');
+                rightHorizontal.className = 'horizontal-connector';
+                rightHorizontal.style.width = `${rightChild.offsetWidth/2}px`;
+                rightHorizontal.style.left = '50%';
+                childrenDiv.insertBefore(rightHorizontal, rightChild);
+            }
+        }
+        
+        // Run Minimax algorithm
+        runMinimaxBtn.addEventListener('click', () => {
+            resetAlgorithmState();
+            currentAlgorithm = 'minimax';
+            alphaBetaInfo.style.display = 'none';
+            
+            // Generate steps for visualization
+            steps = generateMinimaxSteps(tree);
+            stepInfo.textContent = 'Ready to run Minimax algorithm. Click Step to proceed.';
+            
+            stepBtn.disabled = false;
+            autoRunBtn.disabled = false;
+        });
+        
+        // Run Alpha-Beta algorithm
+        runAlphabetaBtn.addEventListener('click', () => {
+            resetAlgorithmState();
+            currentAlgorithm = 'alphabeta';
+            alphaBetaInfo.style.display = 'flex';
+            alphaValue.textContent = '-∞';
+            betaValue.textContent = '+∞';
+            
+            // Generate steps for visualization
+            steps = generateAlphaBetaSteps(tree, -Infinity, Infinity);
+            stepInfo.textContent = 'Ready to run Alpha-Beta algorithm. Click Step to proceed.';
+            
+            stepBtn.disabled = false;
+            autoRunBtn.disabled = false;
+        });
+        
+        // Reset algorithm state
+        resetBtn.addEventListener('click', () => {
+            resetAlgorithmState();
+            renderTree(tree);
+            stepInfo.textContent = 'Algorithm reset. Select an algorithm to run.';
+            alphaBetaInfo.style.display = 'none';
+        });
+        
+        // Step through algorithm
+        stepBtn.addEventListener('click', () => {
+            if (currentStep < steps.length) {
+                executeStep(steps[currentStep]);
+                currentStep++;
+                
+                if (currentStep === steps.length) {
+                    stepInfo.textContent += '\nAlgorithm completed!';
+                    stepBtn.disabled = true;
+                    autoRunBtn.disabled = true;
+                }
+            }
+        });
+        
+        // Auto-run the algorithm
+        autoRunBtn.addEventListener('click', () => {
+            if (isAutoRunning) {
+                clearInterval(autoRunInterval);
+                autoRunBtn.textContent = 'Auto Run';
+                isAutoRunning = false;
+            } else {
+                autoRunBtn.textContent = 'Stop';
+                isAutoRunning = true;
+                
+                autoRunInterval = setInterval(() => {
+                    if (currentStep < steps.length) {
+                        executeStep(steps[currentStep]);
+                        currentStep++;
+                        
+                        if (currentStep === steps.length) {
+                            clearInterval(autoRunInterval);
+                            stepInfo.textContent += '\nAlgorithm completed!';
+                            stepBtn.disabled = true;
+                            autoRunBtn.disabled = true;
+                            autoRunBtn.textContent = 'Auto Run';
+                            isAutoRunning = false;
+                        }
+                    }
+                }, 1000);
+            }
+        });
+        
+        function resetAlgorithmState() {
+            currentStep = 0;
+            steps = [];
+            stepBtn.disabled = true;
+            autoRunBtn.disabled = true;
+            autoRunBtn.textContent = 'Auto Run';
+            isAutoRunning = false;
+            clearInterval(autoRunInterval);
+            
+            // Reset all node values to unknown
+            function resetNode(node) {
+                if (node.type !== 'leaf') {
+                    node.value = null;
+                    if (node.left) resetNode(node.left);
+                    if (node.right) resetNode(node.right);
+                }
+            }
+            
+            if (tree) {
+                resetNode(tree);
+                renderTree(tree);
+            }
+        }
+        
+        // Generate steps for Minimax algorithm
+        function generateMinimaxSteps(node) {
+            const steps = [];
+            
+            function traverse(node) {
+                if (node.type === 'leaf') {
+                    steps.push({
+                        type: 'visit',
+                        nodeId: node.id,
+                        message: `Visiting leaf node with value ${node.value}`
+                    });
+                    return node.value;
+                }
+                
+                steps.push({
+                    type: 'visit',
+                    nodeId: node.id,
+                    message: `Visiting ${node.type} node`
+                });
+                
+                const leftValue = traverse(node.left);
+                const rightValue = traverse(node.right);
+                
+                let value;
+                if (node.type === 'max') {
+                    value = Math.max(leftValue, rightValue);
+                    steps.push({
+                        type: 'compare',
+                        nodeId: node.id,
+                        values: [leftValue, rightValue],
+                        message: `Comparing values at MAX node: ${leftValue} vs ${rightValue}`
+                    });
+                    steps.push({
+                        type: 'update',
+                        nodeId: node.id,
+                        value: value,
+                        message: `MAX node chooses ${value} (the higher value)`
+                    });
+                } else {
+                    value = Math.min(leftValue, rightValue);
+                    steps.push({
+                        type: 'compare',
+                        nodeId: node.id,
+                        values: [leftValue, rightValue],
+                        message: `Comparing values at MIN node: ${leftValue} vs ${rightValue}`
+                    });
+                    steps.push({
+                        type: 'update',
+                        nodeId: node.id,
+                        value: value,
+                        message: `MIN node chooses ${value} (the lower value)`
+                    });
+                }
+                
+                node.value = value;
+                return value;
+            }
+            
+            traverse(node);
+            return steps;
+        }
+        
+        // Generate steps for Alpha-Beta algorithm
+        function generateAlphaBetaSteps(node, alpha, beta) {
+            const steps = [];
+            
+            function traverse(node, alpha, beta) {
+                if (node.type === 'leaf') {
+                    steps.push({
+                        type: 'visit',
+                        nodeId: node.id,
+                        alpha: alpha,
+                        beta: beta,
+                        message: `Visiting leaf node with value ${node.value}`
+                    });
+                    return node.value;
+                }
+                
+                steps.push({
+                    type: 'visit',
+                    nodeId: node.id,
+                    alpha: alpha,
+                    beta: beta,
+                    message: `Visiting ${node.type} node (α=${alpha === -Infinity ? '-∞' : alpha}, β=${beta === Infinity ? '+∞' : beta})`
+                });
+                
+                // First child (left)
+                const leftValue = traverse(node.left, alpha, beta);
+                let newValue = leftValue;
+                
+                if (node.type === 'max') {
+                    const newAlpha = Math.max(alpha, leftValue);
+                    steps.push({
+                        type: 'update-alpha',
+                        nodeId: node.id,
+                        value: leftValue,
+                        alpha: newAlpha,
+                        beta: beta,
+                        message: `After left child: α updated to ${newAlpha === -Infinity ? '-∞' : newAlpha}`
+                    });
+                    
+                    // Check for pruning
+                    if (leftValue >= beta) {
+                        steps.push({
+                            type: 'prune',
+                            nodeId: node.right.id,
+                            message: `Pruning right branch because ${leftValue} >= β (${beta})`
+                        });
+                        return leftValue;
+                    }
+                    
+                    // Second child (right) with updated alpha
+                    const rightValue = traverse(node.right, newAlpha, beta);
+                    newValue = Math.max(leftValue, rightValue);
+                    
+                    steps.push({
+                        type: 'compare',
+                        nodeId: node.id,
+                        values: [leftValue, rightValue],
+                        message: `Comparing values at MAX node: ${leftValue} vs ${rightValue}`
+                    });
+                    
+                    const finalAlpha = Math.max(newAlpha, rightValue);
+                    steps.push({
+                        type: 'update',
+                        nodeId: node.id,
+                        value: newValue,
+                        alpha: finalAlpha,
+                        beta: beta,
+                        message: `MAX node chooses ${newValue} (the higher value), α=${finalAlpha === -Infinity ? '-∞' : finalAlpha}`
+                    });
+                } else { // min node
+                    const newBeta = Math.min(beta, leftValue);
+                    steps.push({
+                        type: 'update-beta',
+                        nodeId: node.id,
+                        value: leftValue,
+                        alpha: alpha,
+                        beta: newBeta,
+                        message: `After left child: β updated to ${newBeta === Infinity ? '+∞' : newBeta}`
+                    });
+                    
+                    // Check for pruning
+                    if (leftValue <= alpha) {
+                        steps.push({
+                            type: 'prune',
+                            nodeId: node.right.id,
+                            message: `Pruning right branch because ${leftValue} <= α (${alpha})`
+                        });
+                        return leftValue;
+                    }
+                    
+                    // Second child (right) with updated beta
+                    const rightValue = traverse(node.right, alpha, newBeta);
+                    newValue = Math.min(leftValue, rightValue);
+                    
+                    steps.push({
+                        type: 'compare',
+                        nodeId: node.id,
+                        values: [leftValue, rightValue],
+                        message: `Comparing values at MIN node: ${leftValue} vs ${rightValue}`
+                    });
+                    
+                    const finalBeta = Math.min(newBeta, rightValue);
+                    steps.push({
+                        type: 'update',
+                        nodeId: node.id,
+                        value: newValue,
+                        alpha: alpha,
+                        beta: finalBeta,
+                        message: `MIN node chooses ${newValue} (the lower value), β=${finalBeta === Infinity ? '+∞' : finalBeta}`
+                    });
+                }
+                
+                node.value = newValue;
+                return newValue;
+            }
+            
+            traverse(node, alpha, beta);
+            return steps;
+        }
+        
+        // Execute a single step of the algorithm
+        function executeStep(step) {
+            // Highlight the current node
+            const allNodes = document.querySelectorAll('.max-node, .min-node, .leaf-node');
+            allNodes.forEach(node => node.classList.remove('highlight', 'pruned'));
+            
+            // Add the new step message
+            const stepMessage = document.createElement('div');
+            stepMessage.textContent = step.message;
+            
+            // Keep only the last 5 steps visible
+            const messages = stepInfo.querySelectorAll('div');
+            if (messages.length >= 5) {
+                stepInfo.removeChild(messages[0]);
+            }
+            
+            stepInfo.appendChild(stepMessage);
+            stepInfo.scrollTop = stepInfo.scrollHeight;
+            
+            if (step.type === 'prune') {
+                const node = document.getElementById(step.nodeId);
+                if (node) {
+                    node.classList.add('pruned');
+                }
+            } else {
+                const node = document.getElementById(step.nodeId);
+                if (node) {
+                    node.classList.add('highlight');
+                }
+                
+                if (step.type === 'update' || step.type === 'update-alpha' || step.type === 'update-beta') {
+                    if (node) {
+                        node.textContent = step.value;
+                    }
+                    
+                    // Update alpha/beta display if applicable
+                    if (currentAlgorithm === 'alphabeta') {
+                        if (step.alpha !== undefined) {
+                            alphaValue.textContent = step.alpha === -Infinity ? '-∞' : step.alpha;
+                        }
+                        if (step.beta !== undefined) {
+                            betaValue.textContent = step.beta === Infinity ? '+∞' : step.beta;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Initialize the tree with default depth
+        treeDepthSelect.dispatchEvent(new Event('change'));
+    </script>
+</body>
+</html>
