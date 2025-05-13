@@ -290,12 +290,75 @@
         .btn.back-btn:hover {
             background-color: #000404;
         }
+        .guide-section {
+            background-color: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .toggle-guide-btn {
+            background-color: #ff9800;
+            margin: 10px 0;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            font-weight: bold;
+        }
+        .toggle-guide-btn:hover { background-color: #f57c00; }
+        .guide-content { display: none; }
+        .guide-content.visible { display: block; }
+        .guide-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .guide-table td, .guide-table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .guide-table th { 
+            background-color: #f9f9f9; 
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Minimax & Alpha-Beta Pruning Simulator</h1>
         <button onclick="window.location.href='index.html'" class="btn back-btn">BACK</button>
+                <div class="guide-section">
+            <button class="toggle-guide-btn" onclick="toggleGuide()">Show Usage Guide ▼</button>
+            <div class="guide-content" id="guideContent">
+                <h3>How to Use the Simulator</h3>
+                <ol>
+                    <li><strong>Configure Tree:</strong>
+                        <ul>
+                            <li>Select depth from dropdown</li>
+                            <li>Choose value range or enter custom values</li>
+                            <li>Click "Build Tree"</li>
+                        </ul>
+                    </li>
+                    <li><strong>Run Algorithms:</strong>
+                        <table class="guide-table">
+                            <tr><th>Button</th><th>Function</th></tr>
+                            <tr><td>Run Minimax</td><td>Classic algorithm</td></tr>
+                            <tr><td>Run Alpha-Beta</td><td>Optimized with pruning</td></tr>
+                            <tr><td>Step/Auto Run</td><td>Control visualization speed</td></tr>
+                        </table>
+                    </li>
+                    <li><strong>Visualization Help:</strong>
+                        <ul>
+                            <li>🔵 Blue: MAX nodes (choose highest)</li>
+                            <li>🔴 Red: MIN nodes (choose lowest)</li>
+                            <li>❌ Crossed nodes: Pruned branches</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+        </div>
         <div class="input-section">
             <label for="tree-depth">Tree Depth:</label>
             <select id="tree-depth">
@@ -828,6 +891,15 @@
             
             traverse(node, alpha, beta);
             return steps;
+        }
+        
+        function toggleGuide() {
+            const guideContent = document.getElementById('guideContent');
+            const toggleBtn = document.querySelector('.toggle-guide-btn');
+            guideContent.classList.toggle('visible');
+            toggleBtn.textContent = guideContent.classList.contains('visible') 
+                ? 'Hide Guide ▲' 
+                : 'Show Guide ▼';
         }
         
         // Execute a single step of the algorithm
