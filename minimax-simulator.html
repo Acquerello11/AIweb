@@ -290,38 +290,12 @@
         .btn.back-btn:hover {
             background-color: #000404;
         }
-        .guide-section {
-            background-color: #fff3e0;
-            border-left: 4px solid #ff9800;
-            padding: 20px;
+         .explanation {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
             margin: 20px 0;
-            border-radius: 4px;
-        }
-        .toggle-guide-btn {
-            background-color: #ff9800;
-            margin: 10px 0;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: white;
-            font-weight: bold;
-        }
-        .toggle-guide-btn:hover { background-color: #f57c00; }
-        .guide-content { display: none; }
-        .guide-content.visible { display: block; }
-        .guide-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        .guide-table td, .guide-table th {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        .guide-table th { 
-            background-color: #f9f9f9; 
+            line-height: 1.6;
         }
     </style>
 </head>
@@ -329,29 +303,17 @@
     <div class="container">
         <h1>Minimax & Alpha-Beta Pruning Simulator</h1>
         <button onclick="window.location.href='index.html'" class="btn back-btn">BACK</button>
-                <div class="guide-section">
-            <button class="toggle-guide-btn" onclick="toggleGuide()">Show Usage Guide ▼</button>
-            <div class="guide-content" id="guideContent">
-                <h3>How to Use the Simulator</h3>
-                <ol>
-                    <li><strong>Configure Tree:</strong>
-                        <ul>
-                            <li>Select depth from dropdown</li>
-                            <li>Choose value range or enter custom values</li>
-                            <li>Click "Build Tree"</li>
-                        </ul>
-                    </li>
-                    <li><strong>Run Algorithms:</strong>
-                        <table class="guide-table">
-                            <tr><th>Button</th><th>Function</th></tr>
-                            <tr><td>Run Minimax</td><td>Classic algorithm</td></tr>
-                            <tr><td>Run Alpha-Beta</td><td>Optimized with pruning</td></tr>
-                            <tr><td>Step/Auto Run</td><td>Control visualization speed</td></tr>
-                        </table>
-                    </li>
-                </ol>
-            </div>
+
+        <div class="explanation">
+        <strong>How to use this tool:</strong><br>
+        1. Enter the number of points you want to randomly generate (e.g., 100000)<br>
+        2. Click the “Estimate Pi” button<br>
+        3. The system will display the estimated value of Pi and details of the simulation<br><br>
+        <strong>Note:</strong> The line graph below shows how the estimated value of Pi 
+        changes as the number of points increases. As more points are sampled, the value will 
+        get closer to 3.14159.
         </div>
+        
         <div class="input-section">
             <label for="tree-depth">Tree Depth:</label>
             <select id="tree-depth">
