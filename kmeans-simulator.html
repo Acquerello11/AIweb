@@ -114,6 +114,15 @@
     <div class="container">
         <h1>K-Means Clustering Simulator</h1>
         <button onclick="window.location.href='index.html'" class="btn back-btn">Back</button>
+
+      <div class="explanation">
+            <strong>How to use this tool:</strong><br>
+            1. Select Number of Clusters (K): Choose how many groups you want to divide the data into<br>
+            2. Add Data Points: Click on the white canvas to add points manually, or press “Add Random Points” to generate them automatically.<br>
+            3. Start Clustering: Click “Run Step” to see the clustering process step by step, or “Run All Steps” to let the program finish the process automatically.<br>
+            4. View Results: The simulator will display each cluster in different colors, along with the centroid (center point) of each group.<br>
+            5. Start Over: Click “Reset” if you want to clear the data and begin again.
+        </div>
         
         <div class="simulator-area">
             <div>
@@ -138,15 +147,6 @@
                 <button id="step-btn" disabled>Run Step</button>
                 <button id="run-all-btn" disabled>Run All Steps</button>
             </div>
-
-            <div class="explanation">
-        <strong>How to use this tool:</strong><br>
-        1. Select Number of Clusters (K): Choose how many groups you want to divide the data into<br>
-        2. Add Data Points: Click on the white canvas to add points manually, or press “Add Random Points” to generate them automatically.<br>
-        3. Start Clustering: Click “Run Step” to see the clustering process step by step, or “Run All Steps” to let the program finish the process automatically.<br>
-        4. View Results: The simulator will display each cluster in different colors, along with the centroid (center point) of each group.<br>
-        5. Start Over: Click “Reset” if you want to clear the data and begin again.
-    </div>
             
             <div class="canvas-container">
                 <canvas id="simulator-canvas" width="800" height="500"></canvas>
