@@ -102,11 +102,10 @@
             line-height: 1.6;
         }
         .btn.back-btn {
-            background-color: #000404;
+            background-color: #2c3e50;
         }
-
         .btn.back-btn:hover {
-            background-color: #000404;
+            background-color: #1a252f;
         }
     </style>
 </head>
@@ -115,19 +114,16 @@
         <h1>K-Means Clustering Simulator</h1>
         <button onclick="window.location.href='index.html'" class="btn back-btn">Back</button>
 
-      <div class="explanation">
+        <div class="explanation">
             <strong>How to use this tool:</strong><br>
             1. Select Number of Clusters (K): Choose how many groups you want to divide the data into<br>
-            2. Add Data Points: Click on the white canvas to add points manually, or press “Add Random Points” to generate them automatically.<br>
-            3. Start Clustering: Click “Run Step” to see the clustering process step by step, or “Run All Steps” to let the program finish the process automatically.<br>
+            2. Add Data Points: Click on the white canvas to add points manually, or press "Add Random Points" to generate them automatically.<br>
+            3. Start Clustering: Click "Run Step" to see the clustering process step by step, or "Run All Steps" to let the program finish the process automatically.<br>
             4. View Results: The simulator will display each cluster in different colors, along with the centroid (center point) of each group.<br>
-            5. Start Over: Click “Reset” if you want to clear the data and begin again.
+            5. Start Over: Click "Reset" if you want to clear the data and begin again.
         </div>
         
         <div class="simulator-area">
-            <div>
-            </div>
-            
             <div class="controls">
                 <div>
                     <label for="k-value">Number of clusters (K):</label>
@@ -145,7 +141,7 @@
                 <button id="reset-btn">Reset</button>
                 <button id="add-points-btn">Add Random Points (10)</button>
                 <button id="step-btn" disabled>Run Step</button>
-                <button id="step-btn" disabled>Undo Step</button>
+                <button id="undo-btn" disabled>Undo Step</button>
                 <button id="run-all-btn" disabled>Run All Steps</button>
             </div>
             
@@ -222,6 +218,7 @@
                     color: clusterColors[i]
                 });
             }
+            
             history = [];
             currentHistoryIndex = -1;
             saveState();
@@ -229,9 +226,30 @@
             drawCanvas();
         }
 
-        // Add state management functions
+        // Save current state to history
         function saveState() {
-            const state = {
+            // Only save if state has changed
+            if (history.length > 0) {
+                const lastState = history[currentHistoryIndex];
+                const currentState = getCurrentState();
+                
+                if (JSON.stringify(lastState) === JSON.stringify(currentState)) {
+                    return;
+                }
+            }
+            
+            // Remove any states after current index
+            if (currentHistoryIndex < history.length - 1) {
+                history = history.slice(0, currentHistoryIndex + 1);
+            }
+            
+            history.push(getCurrentState());
+            currentHistoryIndex = history.length - 1;
+        }
+        
+        // Get current state as an object
+        function getCurrentState() {
+            return {
                 points: JSON.parse(JSON.stringify(points)),
                 centroids: JSON.parse(JSON.stringify(centroids)),
                 clusters: clusters.map(cluster => ({
@@ -242,18 +260,12 @@
                 currentStep: currentStep,
                 isComplete: isComplete
             };
-        
-            // Only keep relevant history
-            if (currentHistoryIndex < history.length - 1) {
-                history = history.slice(0, currentHistoryIndex + 1);
-            }
-            history.push(state);
-            currentHistoryIndex = history.length - 1;
         }
         
+        // Restore state from history
         function restoreState() {
-            if (currentHistoryIndex < 0) return;
-        
+            if (currentHistoryIndex < 0 || currentHistoryIndex >= history.length) return;
+            
             const state = history[currentHistoryIndex];
             points = JSON.parse(JSON.stringify(state.points));
             centroids = JSON.parse(JSON.stringify(state.centroids));
@@ -264,12 +276,12 @@
             }));
             currentStep = state.currentStep;
             isComplete = state.isComplete;
-        
+            
             updateUI();
             drawCanvas();
         }
         
-        // Modified undo function
+        // Undo previous action
         function undo() {
             if (currentHistoryIndex > 0) {
                 currentHistoryIndex--;
@@ -281,6 +293,7 @@
         function updateUI() {
             const stepBtn = document.getElementById('step-btn');
             const runAllBtn = document.getElementById('run-all-btn');
+            const undoBtn = document.getElementById('undo-btn');
             
             if (points.length === 0) {
                 stepBtn.disabled = true;
@@ -310,6 +323,9 @@
                 }
             }
             
+            // Update undo button state
+            undoBtn.disabled = currentHistoryIndex <= 0;
+            
             // Update cluster info
             clusterInfo.innerHTML = '';
             clusters.forEach((cluster, index) => {
@@ -330,7 +346,6 @@
                 `;
                 clusterInfo.appendChild(clusterDiv);
             });
-            document.getElementById('undo-btn').disabled = currentHistoryIndex <= 0;
         }
         
         // Draw everything on canvas
@@ -366,7 +381,6 @@
                 
                 // Draw cluster boundaries (Voronoi cells)
                 if (isComplete) {
-                    // This is a simplified visualization - a real Voronoi diagram would be more complex
                     ctx.strokeStyle = clusterColors[index];
                     ctx.setLineDash([5, 5]);
                     ctx.beginPath();
@@ -411,15 +425,9 @@
         
         // Run one step of the algorithm
         function runStep() {
-            
             if (isComplete) return;
-                    const previousState = JSON.parse(JSON.stringify({
-                points,
-                centroids,
-                clusters,
-                currentStep,
-                isComplete
-            }));
+            
+            const previousState = getCurrentState();
             const k = parseInt(document.getElementById('k-value').value);
             
             // Step 0: Initialization
@@ -436,15 +444,6 @@
                     }
                 }
                 currentStep = 1;
-                        if (JSON.stringify(previousState) !== JSON.stringify({
-                points,
-                centroids,
-                clusters,
-                currentStep,
-                isComplete
-            })) {
-                saveState();
-            }
             }
             
             // Step 1: Calculate distances and assign points
@@ -519,6 +518,11 @@
                 }
             }
             
+            // Only save state if something changed
+            if (JSON.stringify(previousState) !== JSON.stringify(getCurrentState())) {
+                saveState();
+            }
+            
             updateDistanceTable();
             updateUI();
             drawCanvas();
@@ -569,6 +573,7 @@
                     cluster: null
                 });
             }
+            saveState();
             updateUI();
             drawCanvas();
         }
@@ -589,6 +594,7 @@
                 // Add data point
                 points.push({ x, y, cluster: null });
             }
+            
             saveState();
             updateUI();
             drawCanvas();
@@ -596,18 +602,12 @@
         
         // Event listeners for buttons
         document.getElementById('reset-btn').addEventListener('click', initSimulator);
-        document.getElementById('add-points-btn').addEventListener('click', (addRandomPoints) => {
-            saveState();
-        });
-        document.getElementById('step-btn').addEventListener('click', (runStep) => {
-            saveState();
-        });
-        document.getElementById('run-all-btn').addEventListener('click',( runAllSteps)=> {
-            saveState();
-        });
+        document.getElementById('add-points-btn').addEventListener('click', addRandomPoints);
+        document.getElementById('step-btn').addEventListener('click', runStep);
+        document.getElementById('run-all-btn').addEventListener('click', runAllSteps);
+        document.getElementById('undo-btn').addEventListener('click', undo);
         document.getElementById('k-value').addEventListener('change', initSimulator);
         document.getElementById('init-method').addEventListener('change', initSimulator);
-        document.getElementById('undo-btn').addEventListener('click', undo);
         
         // Initialize the simulator
         initSimulator();
