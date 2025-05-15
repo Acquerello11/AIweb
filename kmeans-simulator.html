@@ -579,7 +579,7 @@
         
         // Event listeners for buttons
         document.getElementById('reset-btn').addEventListener('click', initSimulator);
-        document.getElementById('add-points-btn').addEventListener('click', addRandomPoints{
+        document.getElementById('add-points-btn').addEventListener('click', (addRandomPoints) => {
             saveState();
         });
         document.getElementById('step-btn').addEventListener('click', runStep);
