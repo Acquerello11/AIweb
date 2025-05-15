@@ -222,58 +222,61 @@
                     color: clusterColors[i]
                 });
             }
-            
-            updateUI();
-            drawCanvas();
             history = [];
             currentHistoryIndex = -1;
             saveState();
+            updateUI();
+            drawCanvas();
         }
 
+        // Add state management functions
         function saveState() {
             const state = {
-                points: points.map(p => ({...p})),
-                centroids: centroids.map(c => ({...c})),
+                points: JSON.parse(JSON.stringify(points)),
+                centroids: JSON.parse(JSON.stringify(centroids)),
+                clusters: clusters.map(cluster => ({
+                    points: JSON.parse(JSON.stringify(cluster.points)),
+                    centroid: JSON.parse(JSON.stringify(cluster.centroid)),
+                    color: cluster.color
+                })),
                 currentStep: currentStep,
-                isComplete: isComplete,
-                clusters: clusters.map(cl => ({
-                    points: [...cl.points],
-                    centroid: cl.centroid ? {...cl.centroid} : null,
-                    color: cl.color
-                }))
+                isComplete: isComplete
             };
-
+        
+            // Only keep relevant history
             if (currentHistoryIndex < history.length - 1) {
                 history = history.slice(0, currentHistoryIndex + 1);
             }
             history.push(state);
             currentHistoryIndex = history.length - 1;
-            updateUI();
         }
-
-        function restoreState(state) {
-            points = state.points.map(p => ({...p}));
-            centroids = state.centroids.map(c => ({...c}));
+        
+        function restoreState() {
+            if (currentHistoryIndex < 0) return;
+        
+            const state = history[currentHistoryIndex];
+            points = JSON.parse(JSON.stringify(state.points));
+            centroids = JSON.parse(JSON.stringify(state.centroids));
+            clusters = state.clusters.map(cluster => ({
+                points: JSON.parse(JSON.stringify(cluster.points)),
+                centroid: JSON.parse(JSON.stringify(cluster.centroid)),
+                color: cluster.color
+            }));
             currentStep = state.currentStep;
             isComplete = state.isComplete;
-            
-            clusters = state.clusters.map(cl => ({
-                points: [...cl.points],
-                centroid: cl.centroid ? {...cl.centroid} : null,
-                color: cl.color
-            }));
-
-            drawCanvas();
+        
             updateUI();
+            drawCanvas();
         }
-
+        
+        // Modified undo function
         function undo() {
             if (currentHistoryIndex > 0) {
                 currentHistoryIndex--;
-                restoreState(history[currentHistoryIndex]);
+                restoreState();
             }
         }
-        
+                
         // Update UI elements based on current state
         function updateUI() {
             const stepBtn = document.getElementById('step-btn');
@@ -408,9 +411,15 @@
         
         // Run one step of the algorithm
         function runStep() {
-            saveState();
-            if (isComplete) return;
             
+            if (isComplete) return;
+                    const previousState = JSON.parse(JSON.stringify({
+                points,
+                centroids,
+                clusters,
+                currentStep,
+                isComplete
+            }));
             const k = parseInt(document.getElementById('k-value').value);
             
             // Step 0: Initialization
@@ -427,6 +436,15 @@
                     }
                 }
                 currentStep = 1;
+                        if (JSON.stringify(previousState) !== JSON.stringify({
+                points,
+                centroids,
+                clusters,
+                currentStep,
+                isComplete
+            })) {
+                saveState();
+            }
             }
             
             // Step 1: Calculate distances and assign points
@@ -557,7 +575,6 @@
         
         // Handle canvas clicks
         canvas.addEventListener('click', (e) => {
-            saveState();
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -572,7 +589,7 @@
                 // Add data point
                 points.push({ x, y, cluster: null });
             }
-            
+            saveState();
             updateUI();
             drawCanvas();
         });
@@ -582,8 +599,12 @@
         document.getElementById('add-points-btn').addEventListener('click', (addRandomPoints) => {
             saveState();
         });
-        document.getElementById('step-btn').addEventListener('click', runStep);
-        document.getElementById('run-all-btn').addEventListener('click', runAllSteps);
+        document.getElementById('step-btn').addEventListener('click', (runStep) => {
+            saveState();
+        });
+        document.getElementById('run-all-btn').addEventListener('click',( runAllSteps)=> {
+            saveState();
+        });
         document.getElementById('k-value').addEventListener('change', initSimulator);
         document.getElementById('init-method').addEventListener('change', initSimulator);
         document.getElementById('undo-btn').addEventListener('click', undo);
