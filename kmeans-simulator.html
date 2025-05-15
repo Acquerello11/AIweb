@@ -145,6 +145,7 @@
                 <button id="reset-btn">Reset</button>
                 <button id="add-points-btn">Add Random Points (10)</button>
                 <button id="step-btn" disabled>Run Step</button>
+                <button id="step-btn" disabled>Undo Step</button>
                 <button id="run-all-btn" disabled>Run All Steps</button>
             </div>
             
@@ -189,6 +190,8 @@
         const distanceTable = document.getElementById('distance-table').getElementsByTagName('tbody')[0];
         
         // Simulation state
+        let history = [];
+        let currentHistoryIndex = -1;
         let points = [];
         let centroids = [];
         let clusters = [];
@@ -222,6 +225,53 @@
             
             updateUI();
             drawCanvas();
+            history = [];
+            currentHistoryIndex = -1;
+            saveState();
+        }
+
+        function saveState() {
+            const state = {
+                points: points.map(p => ({...p})),
+                centroids: centroids.map(c => ({...c})),
+                currentStep: currentStep,
+                isComplete: isComplete,
+                clusters: clusters.map(cl => ({
+                    points: [...cl.points],
+                    centroid: cl.centroid ? {...cl.centroid} : null,
+                    color: cl.color
+                }))
+            };
+
+            if (currentHistoryIndex < history.length - 1) {
+                history = history.slice(0, currentHistoryIndex + 1);
+            }
+            history.push(state);
+            currentHistoryIndex = history.length - 1;
+            updateUI();
+        }
+
+        function restoreState(state) {
+            points = state.points.map(p => ({...p}));
+            centroids = state.centroids.map(c => ({...c}));
+            currentStep = state.currentStep;
+            isComplete = state.isComplete;
+            
+            clusters = state.clusters.map(cl => ({
+                points: [...cl.points],
+                centroid: cl.centroid ? {...cl.centroid} : null,
+                color: cl.color
+            }));
+
+            drawCanvas();
+            updateUI();
+        }
+
+        function undo() {
+            if (currentHistoryIndex > 0) {
+                currentHistoryIndex--;
+                restoreState(history[currentHistoryIndex]);
+            }
         }
         
         // Update UI elements based on current state
@@ -277,6 +327,7 @@
                 `;
                 clusterInfo.appendChild(clusterDiv);
             });
+            document.getElementById('undo-btn').disabled = currentHistoryIndex <= 0;
         }
         
         // Draw everything on canvas
@@ -357,6 +408,7 @@
         
         // Run one step of the algorithm
         function runStep() {
+            saveState();
             if (isComplete) return;
             
             const k = parseInt(document.getElementById('k-value').value);
@@ -505,6 +557,7 @@
         
         // Handle canvas clicks
         canvas.addEventListener('click', (e) => {
+            saveState();
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -526,11 +579,14 @@
         
         // Event listeners for buttons
         document.getElementById('reset-btn').addEventListener('click', initSimulator);
-        document.getElementById('add-points-btn').addEventListener('click', addRandomPoints);
+        document.getElementById('add-points-btn').addEventListener('click', addRandomPoints{
+            saveState();
+        });
         document.getElementById('step-btn').addEventListener('click', runStep);
         document.getElementById('run-all-btn').addEventListener('click', runAllSteps);
         document.getElementById('k-value').addEventListener('change', initSimulator);
         document.getElementById('init-method').addEventListener('change', initSimulator);
+        document.getElementById('undo-btn').addEventListener('click', undo);
         
         // Initialize the simulator
         initSimulator();
