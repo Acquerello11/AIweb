@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estimate Pi Using Monte Carlo Method</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -50,6 +50,7 @@
             font-size: 18px;
             text-align: center;
             color: #16a085;
+            white-space: pre-line;
         }
         .explanation {
             background: #ecf0f1;
@@ -58,7 +59,51 @@
             margin: 20px 0;
             line-height: 1.6;
         }
-        .btn.back-btn {
+        #speedControl {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        #speedInput {
+            width: 70px;
+        }
+        #progressText {
+            font-weight: bold;
+            margin-top: 10px;
+            text-align: center;
+            color: #34495e;
+        }
+        /* Fix slider 0 position */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 250px;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            margin-top: -5px;
+            border: 1px solid #2980b9;
+        }
+        input[type=range]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            border: 1px solid #2980b9;
+        }
+         .btn.back-btn {
             background-color: #000404;
         }
 
@@ -81,19 +126,26 @@
     </div>
 
     <label for="pointsInput">Enter the number of random points:</label>
-    <input type="number" id="pointsInput" value="10000" min="100">
-    <button onclick="startSimulation()">Estimate Pi</button>
+    <input type="number" id="pointsInput" value="10000" min="100" />
+    <button onclick="startSimulation()" id="startBtn">Estimate Pi</button>
+
+    <div id="speedControl">
+        <label for="speedSlider">Speed (ms delay):</label>
+        <input type="range" id="speedSlider" min="0" max="1000" value="250" step="1" />
+        <input type="number" id="speedInput" min="0" max="1000" value="250" step="1" />
+    </div>
 
     <canvas id="canvas" width="400" height="400"></canvas>
     <canvas id="piChart" width="400" height="200"></canvas>
 
     <div class="result" id="result"></div>
+    <div id="progressText"></div>
 
     <div class="explanation">
         <strong>How to use this tool:</strong><br>
         1. Enter the number of points you want to randomly generate (e.g., 100000)<br>
         2. Click the “Estimate Pi” button<br>
-        3. The system will display the estimated value of Pi and details of the simulation<br><br>
+        3. The system will display the estimated value of Pi and details of the simulation after all points are added<br><br>
         <strong>Note:</strong> The line graph below shows how the estimated value of Pi 
         changes as the number of points increases. As more points are sampled, the value will 
         get closer to 3.14159.
@@ -102,12 +154,55 @@
 
 <script>
 let chart;
+const canvas = document.getElementById('canvas');
+const ctxCanvas = canvas.getContext('2d');
+const piChartCtx = document.getElementById('piChart').getContext('2d');
+const pointsInput = document.getElementById('pointsInput');
+const speedSlider = document.getElementById('speedSlider');
+const speedInput = document.getElementById('speedInput');
+const resultDiv = document.getElementById('result');
+const progressText = document.getElementById('progressText');
+const startBtn = document.getElementById('startBtn');
 
-function startSimulation() {
-    const totalPoints = parseInt(document.getElementById('pointsInput').value);
-    const canvas = document.getElementById('canvas');
-    const ctxCanvas = canvas.getContext('2d');
+let simulationRunning = false;
+
+function syncSpeedInputs(source) {
+    if (source === 'slider') {
+        speedInput.value = speedSlider.value;
+    } else {
+        // Limit speedInput within range before setting slider
+        let val = parseInt(speedInput.value);
+        if (isNaN(val)) val = 0;
+        if (val < 0) val = 0;
+        if (val > 1000) val = 1000;
+        speedInput.value = val;
+        speedSlider.value = val;
+    }
+}
+
+speedSlider.addEventListener('input', () => {
+    syncSpeedInputs('slider');
+});
+speedInput.addEventListener('input', () => {
+    syncSpeedInputs('input');
+});
+
+async function startSimulation() {
+    if (simulationRunning) return; // Prevent multiple runs at once
+    simulationRunning = true;
+
+    const totalPoints = parseInt(pointsInput.value);
+    if (isNaN(totalPoints) || totalPoints < 100) {
+        alert("Please enter a valid number of points (at least 100).");
+        simulationRunning = false;
+        return;
+    }
+
+    // Clear previous
     ctxCanvas.clearRect(0, 0, canvas.width, canvas.height);
+    resultDiv.textContent = '';
+    progressText.textContent = '';
+    if (chart) chart.destroy();
 
     // Draw square
     ctxCanvas.strokeStyle = '#000';
@@ -142,31 +237,50 @@ function startSimulation() {
         ctxCanvas.fill();
 
         if (i % stepSize === 0) {
-            let piEstimate = 4 * insideCircle / (i+1);
+            let piEstimate = 4 * insideCircle / (i + 1);
             piHistory.push(piEstimate);
+        }
+
+        progressText.textContent = `Adding point ${i + 1} of ${totalPoints}...`;
+
+        // Await delay according to slider/input speed (convert string to int)
+        let delayMs = parseInt(speedSlider.value);
+        if (delayMs > 0) {
+            await new Promise(resolve => setTimeout(resolve, delayMs));
         }
     }
 
+    // After all points added, show final estimate
     const piEstimate = 4 * insideCircle / totalPoints;
-    document.getElementById('result').innerText = `Estimated Pi = ${piEstimate.toFixed(6)} (using ${totalPoints} points)\n\nSimulation completed`;
+    resultDiv.textContent = `Estimated Pi = ${piEstimate.toFixed(6)} (using ${totalPoints} points)\n\nSimulation completed`;
+    progressText.textContent = '';
 
     drawPiChart(piHistory);
+    simulationRunning = false;
 }
 
 function drawPiChart(piHistory) {
-    const ctxChart = document.getElementById('piChart').getContext('2d');
     if (chart) chart.destroy();
-    chart = new Chart(ctxChart, {
+    chart = new Chart(piChartCtx, {
         type: 'line',
         data: {
-            labels: piHistory.map((_, i) => i+1),
-            datasets: [{
-                label: 'Estimated Pi',
-                data: piHistory,
-                borderColor: '#e74c3c',
-                fill: false,
-                tension: 0.1
-            }]
+            labels: piHistory.map((_, i) => i + 1),
+            datasets: [
+                {
+                    label: 'Estimated Pi',
+                    data: piHistory,
+                    borderColor: '#e74c3c',
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Actual Pi',
+                    data: Array(piHistory.length).fill(Math.PI),
+                    borderColor: '#2980b9',
+                    borderDash: [5, 5],
+                    fill: false
+                }
+            ]
         },
         options: {
             scales: {
