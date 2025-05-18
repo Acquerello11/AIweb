@@ -1,1 +1,31 @@
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://AIHCUweb-url.com
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      # ขั้นตอน deploy
+- name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm test
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to server
+        run: |
+          echo "เริ่มการ deploy..."
+          rsync -avz ./build Acquerello11@AIweb.com:/path/to/deploy
